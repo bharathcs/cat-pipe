@@ -5,12 +5,15 @@ import (
 	"io"
 )
 
-func PipeWithBytes(r io.Reader, w io.Writer, middle RawByteManipulator) (LineCounts, error) {
-	return pipe(r, w, convertRawByteManipulator(middle))
+// Pipe reads lines from r (up to '\n), send to middle function, and write the returned string to w.
+// If middle were a bash function that took in and returned a string, this should work as `cat r | middle > w`
+func Pipe(r io.Reader, w io.Writer, middle LineManipulator) (result LineCounts, err error) {
+	return pipe(r, w, convertLineManipulator(middle))
 }
 
-func Pipe(r io.Reader, w io.Writer, middle LineManipulator) (LineCounts, error) {
-	return pipe(r, w, convertLineManipulator(middle))
+// PipeWithBytes is the same basic function as Pipe, but allows the function to work with byte arrays directly.
+func PipeWithBytes(r io.Reader, w io.Writer, middle RawByteManipulator) (LineCounts, error) {
+	return pipe(r, w, convertRawByteManipulator(middle))
 }
 
 type middleFunction = func(sc *bufio.Scanner, wr *bufio.Writer, lc *LineCounts) (err error)

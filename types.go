@@ -5,11 +5,16 @@ import (
 )
 
 // RawByteManipulator takes in byte array (without newline) and returns byte array (without newlines). Return empty array to skip, non-nil err to stop.
-type RawByteManipulator = func(in []byte) ([]byte, error)
+// out: The line to be added to the writer. If nil or of length 0, no line will be added.
+// err: Error to be thrown, execution will stop here.
+type RawByteManipulator = func(in []byte) (out []byte, err error)
 
 // LineManipulator takes in string (without newline) and returns strings (without newlines), Return empty string to skip, non-nil err to stop.
-type LineManipulator = func(in string) (string, error)
+// out: The line to be added to the writer. If empty, no line will be added.
+// err: Error to be thrown, execution will stop here.
+type LineManipulator = func(in string) (out string, err error)
 
+// Struct identifies the progress of the pipe function moving through the reader and writer
 type LineCounts struct {
 	ReadLineCount    uint
 	WrittenLineCount uint
@@ -23,6 +28,7 @@ func NewLineCounts(readLineCount, writtenLineCount uint) LineCounts {
 	return LineCounts{ReadLineCount: readLineCount, WrittenLineCount: writtenLineCount}
 }
 
+// ReadErrors wrap any non-EOF error encountered while using the reader.
 type ReadError struct {
 	LineCounts LineCounts
 	Err        error
@@ -36,6 +42,7 @@ func NewReadError(lc LineCounts, err error) *ReadError {
 	return &ReadError{LineCounts: lc, Err: err}
 }
 
+// WriteError wrap any error encountered while using the writer.
 type WriteError struct {
 	LineCounts LineCounts
 	Err        error
@@ -49,6 +56,7 @@ func (e *WriteError) Error() string {
 	return fmt.Sprintf("execution stopped with %s, due to error from writer %v", e.LineCounts.String(), e.Err)
 }
 
+// MiddleError wrap any error encountered while executing the user passed function.
 type MiddleError struct {
 	LineCounts LineCounts
 	Err        error

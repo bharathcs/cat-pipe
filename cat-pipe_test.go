@@ -21,23 +21,23 @@ var basicMiddleFn = func(sc *bufio.Scanner, wr *bufio.Writer, lc *LineCounts) (e
 	return err
 }
 
-func createSkipEvenLinesMiddleFn() middleFunction{
+func createSkipEvenLinesMiddleFn() middleFunction {
 	lineNum := 0
 
 	return func(sc *bufio.Scanner, wr *bufio.Writer, lc *LineCounts) (err error) {
 
-	txt := sc.Text()
-	if len(txt) > 0 {
-		lineNum++
-		if lineNum%2==0 {
-			return nil
-		}
+		txt := sc.Text()
+		if len(txt) > 0 {
+			lineNum++
+			if lineNum%2 == 0 {
+				return nil
+			}
 
-		_, err = wr.WriteString(txt + "\n")
-		wr.Flush()
-		lc.WrittenLineCount++
-	}
-	return err
+			_, err = wr.WriteString(txt + "\n")
+			wr.Flush()
+			lc.WrittenLineCount++
+		}
+		return err
 	}
 }
 
@@ -207,7 +207,7 @@ func (r *readerWithError) Read(p []byte) (n int, err error) {
 func Test_pipe_errorHandling(t *testing.T) {
 	type args struct {
 		r      io.Reader
-		w				io.Writer
+		w      io.Writer
 		middle middleFunction
 	}
 	tests := []struct {
@@ -230,7 +230,7 @@ func Test_pipe_errorHandling(t *testing.T) {
 			},
 			want:    LineCounts{5, 8},
 			wantW:   "",
-			wantErr: fmt.Errorf("mayday mayday mayday") ,
+			wantErr: fmt.Errorf("mayday mayday mayday"),
 		},
 		{
 			name: "reader function error",
@@ -241,7 +241,7 @@ func Test_pipe_errorHandling(t *testing.T) {
 			},
 			want:    LineCounts{0, 0},
 			wantW:   "",
-			wantErr: fmt.Errorf("execution stopped with 0 lines read, 0 lines written, due to error from reader reading failed here") ,
+			wantErr: NewReadError(LineCounts{0, 0}, fmt.Errorf("reading failed here")),
 		},
 	}
 	for _, tt := range tests {
@@ -266,7 +266,7 @@ func pipeStub(input string, fn middleFunction) (string, LineCounts, error) {
 	sc := bufio.NewScanner(strings.NewReader(input))
 	w := &bytes.Buffer{}
 	wr := bufio.NewWriter(w)
-	lc := LineCounts{0,0}
+	lc := LineCounts{0, 0}
 	var err error
 	for sc.Scan() {
 		lc.ReadLineCount++
@@ -282,14 +282,14 @@ func pipeStub(input string, fn middleFunction) (string, LineCounts, error) {
 func Test_convertRawByteManipulator(t *testing.T) {
 	type args struct {
 		middle RawByteManipulator
-		in []byte
+		in     []byte
 	}
 	tests := []struct {
-		name string
-		args args
-		wantOut string
+		name           string
+		args           args
+		wantOut        string
 		wantLineCounts LineCounts
-		wantErr error
+		wantErr        error
 	}{
 		{
 			name: "basic - one line",
@@ -299,9 +299,9 @@ func Test_convertRawByteManipulator(t *testing.T) {
 				},
 				in: []byte("foo fighters\n"),
 			},
-			wantOut: "arctic monkeys\n",
-			wantLineCounts: LineCounts{1,1},
-			wantErr: nil,
+			wantOut:        "arctic monkeys\n",
+			wantLineCounts: LineCounts{1, 1},
+			wantErr:        nil,
 		},
 		{
 			name: "basic - three line",
@@ -311,9 +311,9 @@ func Test_convertRawByteManipulator(t *testing.T) {
 				},
 				in: []byte("foo fighters\narctic monkeys\nlime cordiale\n"),
 			},
-			wantOut: "foo fighters\narctic monkeys\nlime cordiale\n",
-			wantLineCounts: LineCounts{3,3},
-			wantErr: nil,
+			wantOut:        "foo fighters\narctic monkeys\nlime cordiale\n",
+			wantLineCounts: LineCounts{3, 3},
+			wantErr:        nil,
 		},
 		{
 			name: "skip writes",
@@ -323,9 +323,9 @@ func Test_convertRawByteManipulator(t *testing.T) {
 				},
 				in: []byte("foo fighters\narctic monkeys\nlime cordiale\n"),
 			},
-			wantOut: "",
-			wantLineCounts: LineCounts{3,0},
-			wantErr: nil,
+			wantOut:        "",
+			wantLineCounts: LineCounts{3, 0},
+			wantErr:        nil,
 		},
 		{
 			name: "return error",
@@ -335,9 +335,9 @@ func Test_convertRawByteManipulator(t *testing.T) {
 				},
 				in: []byte("foo fighters\narctic monkeys\nlime cordiale\n"),
 			},
-			wantOut: "",
-			wantLineCounts: LineCounts{1,0},
-			wantErr: fmt.Errorf("execution stopped with 1 lines read, 0 lines written, due to error from middle function Failed here"),
+			wantOut:        "",
+			wantLineCounts: LineCounts{1, 0},
+			wantErr:        fmt.Errorf("execution stopped with 1 lines read, 0 lines written, due to error from middle function Failed here"),
 		},
 	}
 	for _, tt := range tests {
@@ -359,14 +359,14 @@ func Test_convertRawByteManipulator(t *testing.T) {
 func Test_convertLineManipulator(t *testing.T) {
 	type args struct {
 		middle LineManipulator
-		in string
+		in     string
 	}
 	tests := []struct {
-		name string
-		args args
-		wantOut string
+		name           string
+		args           args
+		wantOut        string
 		wantLineCounts LineCounts
-		wantErr error
+		wantErr        error
 	}{
 		{
 			name: "basic - one line",
@@ -376,9 +376,9 @@ func Test_convertLineManipulator(t *testing.T) {
 				},
 				in: "foo fighters\n",
 			},
-			wantOut: "arctic monkeys\n",
-			wantLineCounts: LineCounts{1,1},
-			wantErr: nil,
+			wantOut:        "arctic monkeys\n",
+			wantLineCounts: LineCounts{1, 1},
+			wantErr:        nil,
 		},
 		{
 			name: "basic - three line",
@@ -388,9 +388,9 @@ func Test_convertLineManipulator(t *testing.T) {
 				},
 				in: "foo fighters\narctic monkeys\nlime cordiale\n",
 			},
-			wantOut: "foo fighters\narctic monkeys\nlime cordiale\n",
-			wantLineCounts: LineCounts{3,3},
-			wantErr: nil,
+			wantOut:        "foo fighters\narctic monkeys\nlime cordiale\n",
+			wantLineCounts: LineCounts{3, 3},
+			wantErr:        nil,
 		},
 		{
 			name: "skip writes",
@@ -400,9 +400,9 @@ func Test_convertLineManipulator(t *testing.T) {
 				},
 				in: "foo fighters\narctic monkeys\nlime cordiale\n",
 			},
-			wantOut: "",
-			wantLineCounts: LineCounts{3,0},
-			wantErr: nil,
+			wantOut:        "",
+			wantLineCounts: LineCounts{3, 0},
+			wantErr:        nil,
 		},
 		{
 			name: "return error",
@@ -412,9 +412,9 @@ func Test_convertLineManipulator(t *testing.T) {
 				},
 				in: "foo fighters\narctic monkeys\nlime cordiale\n",
 			},
-			wantOut: "",
-			wantLineCounts: LineCounts{1,0},
-			wantErr: fmt.Errorf("execution stopped with 1 lines read, 0 lines written, due to error from middle function Failed here"),
+			wantOut:        "",
+			wantLineCounts: LineCounts{1, 0},
+			wantErr:        fmt.Errorf("execution stopped with 1 lines read, 0 lines written, due to error from middle function Failed here"),
 		},
 	}
 	for _, tt := range tests {
