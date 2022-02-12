@@ -25,6 +25,10 @@ jobs:
     - name: Test
       continue-on-error: false
       run: go test -v ./...
+      
+    - name: Format
+      run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
+      if: matrix.os == 'ubuntu-latest'
     
   run-codecov:
     needs: [build]
