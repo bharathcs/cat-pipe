@@ -27,6 +27,7 @@ jobs:
       run: go test -v ./...
     
   run-codecov:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
 
@@ -41,5 +42,7 @@ jobs:
       - name: Run coverage
         run: go test -race -coverprofile=coverage.out -covermode=atomic
 
-      - name: Upload coverage to Codecov
-        run: bash <(curl -s https://codecov.io/bash)
+      - uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
